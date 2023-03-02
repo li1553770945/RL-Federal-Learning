@@ -1,9 +1,14 @@
 from flwr.server import ClientManager
+from flwr.server.client_proxy import ClientProxy
+from flwr.server.criterion import Criterion
+import random
 import threading
-from typing import Dict
-from fl.
-class Manager(ClientManager):
-    """Provides a pool of available clients."""
+from typing import Dict, Optional, List
+from flwr.common.logger import log
+from logging import INFO
+
+
+class RLManager(ClientManager):
 
     def __init__(self) -> None:
         self.clients: Dict[str, ClientProxy] = {}
@@ -13,50 +18,15 @@ class Manager(ClientManager):
         return len(self.clients)
 
     def num_available(self) -> int:
-        """Return the number of available clients.
-
-        Returns
-        -------
-        num_available : int
-            The number of currently available clients.
-        """
         return len(self)
 
     def wait_for(self, num_clients: int, timeout: int = 86400) -> bool:
-        """Wait until at least `num_clients` are available.
-
-        Blocks until the requested number of clients is available or until a
-        timeout is reached. Current timeout default: 1 day.
-
-        Parameters
-        ----------
-        num_clients : int
-            The number of clients to wait for.
-        timeout : int
-            The time in seconds to wait for, defaults to 86400 (24h).
-
-        Returns
-        -------
-        success : bool
-        """
         with self._cv:
             return self._cv.wait_for(
                 lambda: len(self.clients) >= num_clients, timeout=timeout
             )
 
     def register(self, client: ClientProxy) -> bool:
-        """Register Flower ClientProxy instance.
-
-        Parameters
-        ----------
-        client : flwr.server.client_proxy.ClientProxy
-
-        Returns
-        -------
-        success : bool
-            Indicating if registration was successful. False if ClientProxy is
-            already registered or can not be registered for any reason.
-        """
         if client.cid in self.clients:
             return False
 
@@ -67,14 +37,6 @@ class Manager(ClientManager):
         return True
 
     def unregister(self, client: ClientProxy) -> None:
-        """Unregister Flower ClientProxy instance.
-
-        This method is idempotent.
-
-        Parameters
-        ----------
-        client : flwr.server.client_proxy.ClientProxy
-        """
         if client.cid in self.clients:
             del self.clients[client.cid]
 
@@ -82,7 +44,6 @@ class Manager(ClientManager):
                 self._cv.notify_all()
 
     def all(self) -> Dict[str, ClientProxy]:
-        """Return all available clients."""
         return self.clients
 
     def sample(
@@ -115,4 +76,3 @@ class Manager(ClientManager):
 
         sampled_cids = random.sample(available_cids, num_clients)
         return [self.clients[cid] for cid in sampled_cids]
-
