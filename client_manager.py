@@ -29,7 +29,7 @@ class RLManager(ClientManager):
     def register(self, client: ClientProxy) -> bool:
         if client.cid in self.clients:
             return False
-
+        print("register new client,id:{}".format(client.cid))
         self.clients[client.cid] = client
         with self._cv:
             self._cv.notify_all()

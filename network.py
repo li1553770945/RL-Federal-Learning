@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-# Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')
-# borrowed from Pytorch quickstart example
 class Net(nn.Module):
     def __init__(self) -> None:
         super(Net, self).__init__()
@@ -26,7 +24,7 @@ class Net(nn.Module):
 
 
 # borrowed from Pytorch quickstart example
-def train(net, trainloader, epochs, device: str):
+def train(net, trainloader, epochs, device: torch.device):
     """Train the network on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
