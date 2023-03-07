@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import numpy as np
+from typing import List
+from collections import OrderedDict
 
 class Net(nn.Module):
     def __init__(self) -> None:
@@ -53,3 +55,16 @@ def test(net, testloader, device: str):
             correct += (predicted == labels).sum().item()
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy
+
+
+def get_params(model: Net) -> List[np.ndarray]:
+    """Get model weights as a list of NumPy ndarrays."""
+    return [val.cpu().numpy() for _, val in model.state_dict().items()]
+
+
+def set_params(model: Net, params: List[np.ndarray]):
+    """Set model weights from a list of NumPy ndarrays."""
+    params_dict = zip(model.state_dict().keys(), params)
+    state_dict = OrderedDict({k: torch.from_numpy(np.copy(v)) for k, v in params_dict})
+    model.load_state_dict(state_dict, strict=True)
+

@@ -9,5 +9,5 @@ class ClientState:
         self.S_FC = S_FC
 
     def to_numpy(self):
-        data = np.array()
+        data = np.zeros((10,))
         pass

@@ -1,14 +1,13 @@
+import sys
+
+sys.path.append("..")
 import flwr as fl
 import torch
-from typing import Dict,List,Callable,Optional,Tuple
-from pathlib import Path
+from typing import Dict
 from flwr.common.typing import Scalar
-from network import Net, train,test
+from network import Net, train, test,get_params,set_params
 from dataset_utils import get_dataloader
 import ray
-from collections import OrderedDict
-import numpy as np
-import torchvision
 
 # Flower client
 class FlowerClient(fl.client.NumPyClient):
@@ -27,7 +26,7 @@ class FlowerClient(fl.client.NumPyClient):
         set_params(self.net, parameters)
 
         # Load data for this client and get trainloader
-        num_workers = int(ray.get_runtime_context().get_assigned_resources()["CPU"])
+        num_workers = 0
         trainloader = get_dataloader(
             self.fed_dir,
             self.cid,
@@ -49,7 +48,7 @@ class FlowerClient(fl.client.NumPyClient):
         set_params(self.net, parameters)
 
         # Load data for this client and get trainloader
-        num_workers = int(ray.get_runtime_context().get_assigned_resources()["CPU"])
+        num_workers = 0
         valloader = get_dataloader(
             self.fed_dir, self.cid, is_train=False, batch_size=50, workers=num_workers
         )
@@ -71,41 +70,3 @@ def fit_config(server_round: int) -> Dict[str, Scalar]:
         "batch_size": 16,
     }
     return config
-
-
-def get_params(model: Net) -> List[np.ndarray]:
-    """Get model weights as a list of NumPy ndarrays."""
-    return [val.cpu().numpy() for _, val in model.state_dict().items()]
-
-
-def set_params(model: Net, params: List[np.ndarray]):
-    """Set model weights from a list of NumPy ndarrays."""
-    params_dict = zip(model.state_dict().keys(), params)
-    state_dict = OrderedDict({k: torch.from_numpy(np.copy(v)) for k, v in params_dict})
-    model.load_state_dict(state_dict, strict=True)
-
-
-def get_evaluate_fn(
-    testset: torchvision.datasets.CIFAR10,
-) -> Callable[[fl.common.NDArrays], Optional[Tuple[float, float]]]:
-    """Return an evaluation function for centralized evaluation."""
-
-    def evaluate(
-        server_round: int, parameters: fl.common.NDArrays, config: Dict[str, Scalar]
-    ) -> Optional[Tuple[float, float]]:
-        """Use the entire CIFAR-10 test set for evaluation."""
-
-        # determine device
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-        model = Net()
-        set_params(model, parameters)
-        model.to(device)
-
-        testloader = torch.utils.data.DataLoader(testset, batch_size=50)
-        loss, accuracy = test(model, testloader, device=device)
-
-        # return statistics
-        return loss, {"accuracy": accuracy}
-
-    return evaluate
