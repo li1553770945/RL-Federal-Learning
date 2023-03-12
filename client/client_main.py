@@ -13,7 +13,7 @@ def start_client(cid:str,fed_dir:str):
 
 if __name__ == "__main__":
 
-    num_clients = 10
+    num_clients = 50
     fed_dir = "data/cifar-10-batches-py/federated"
 
 
@@ -23,7 +23,6 @@ if __name__ == "__main__":
         t = Process(target=start_client,args=(str(i),fed_dir))
         t.start()
         processes.append(t)
-        time.sleep(5)
 
     for i in range(num_clients):
         processes[i].join()

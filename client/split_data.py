@@ -9,7 +9,7 @@ from client import FlowerClient
 
 if __name__ == "__main__":
 
-    num_clients = 10
+    num_clients = 50
     train_path, testset = get_cifar_10()
     fed_dir = do_fl_partitioning(
         train_path, pool_size=num_clients, alpha=1000, num_classes=10, val_ratio=0.1
