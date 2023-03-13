@@ -27,6 +27,7 @@ def get_dataloader(
 
     # we use as number of workers all the cpu cores assigned to this actor
     kwargs = {"num_workers": workers, "pin_memory": True, "drop_last": False}
+    print(batch_size)
     return DataLoader(dataset, batch_size=batch_size, **kwargs)
 
 

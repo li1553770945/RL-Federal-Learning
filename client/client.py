@@ -50,7 +50,7 @@ class FlowerClient(fl.client.NumPyClient):
         # Load data for this client and get trainloader
         num_workers = 0
         valloader = get_dataloader(
-            self.fed_dir, self.cid, is_train=False, batch_size=50, workers=num_workers
+            self.fed_dir, self.cid, is_train=False, batch_size=1, workers=num_workers
         )
 
         # Send model to device
@@ -63,10 +63,4 @@ class FlowerClient(fl.client.NumPyClient):
         return float(loss), len(valloader.dataset), {"accuracy": float(accuracy)}
 
 
-def fit_config(server_round: int) -> Dict[str, Scalar]:
-    """Return a configuration with static batch size and (local) epochs."""
-    config = {
-        "epochs": 5,  # number of local epochs
-        "batch_size": 16,
-    }
-    return config
+

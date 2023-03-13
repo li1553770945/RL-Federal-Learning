@@ -1,13 +1,22 @@
 import flwr as fl
-from client.client import fit_config
 from client_manager import RLManager
 from evaluate import get_evaluate_fn
 from dataset_utils import get_cifar_10
+from typing import Dict
+from flwr.common.typing import Scalar
+
+def fit_config(server_round: int) -> Dict[str, Scalar]:
+    """Return a configuration with static batch size and (local) epochs."""
+    config = {
+        "epochs": 5,  # number of local epochs
+        "batch_size": 1,
+    }
+    return config
 
 if __name__ == "__main__":
 
-    num_rounds = 5 # 总共训练的几轮
-    min_fit_clients = 2
+    num_rounds = 10 # 总共训练的几轮
+    min_fit_clients = 20
     # configure the strategy
     train_path, testset = get_cifar_10()
     strategy = fl.server.strategy.FedAvg(
@@ -42,7 +51,9 @@ if __name__ == "__main__":
 
     fl.server.start_server(
         config=fl.server.ServerConfig(num_rounds=num_rounds),
+        server_address="0.0.0.0:9092",
         strategy=strategy,
         client_manager=RLManager(),
     )
+
 

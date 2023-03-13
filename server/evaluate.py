@@ -29,7 +29,7 @@ def get_evaluate_fn(
         set_params(model, parameters)
         model.to(device)
 
-        testloader = torch.utils.data.DataLoader(testset, batch_size=50)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1)
         loss, accuracy = test(model, testloader, device=device)
 
         # return statistics

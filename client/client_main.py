@@ -1,19 +1,17 @@
-import time
 import sys
 
 sys.path.append("..")
-from dataset_utils import get_cifar_10,do_fl_partitioning
 import flwr as fl
 from client import FlowerClient
 from multiprocessing import Process
 
 def start_client(cid:str,fed_dir:str):
-    fl.client.start_numpy_client(server_address="[::]:9092", client=FlowerClient(cid, fed_dir))
+    fl.client.start_numpy_client(server_address="localhost:9092", client=FlowerClient(cid, fed_dir))
 
 
 if __name__ == "__main__":
 
-    num_clients = 50
+    num_clients = 10
     fed_dir = "data/cifar-10-batches-py/federated"
 
 
