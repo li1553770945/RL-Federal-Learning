@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import List
-from collections import OrderedDict
 
+
+# Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')
+# borrowed from Pytorch quickstart example
 class Net(nn.Module):
     def __init__(self) -> None:
         super(Net, self).__init__()
@@ -26,7 +26,7 @@ class Net(nn.Module):
 
 
 # borrowed from Pytorch quickstart example
-def train(net, trainloader, epochs, device: torch.device):
+def train(net, trainloader, epochs, device: str):
     """Train the network on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
@@ -55,16 +55,3 @@ def test(net, testloader, device: str):
             correct += (predicted == labels).sum().item()
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy
-
-
-def get_params(model: Net) -> List[np.ndarray]:
-    """Get model weights as a list of NumPy ndarrays."""
-    return [val.cpu().numpy() for _, val in model.state_dict().items()]
-
-
-def set_params(model: Net, params: List[np.ndarray]):
-    """Set model weights from a list of NumPy ndarrays."""
-    params_dict = zip(model.state_dict().keys(), params)
-    state_dict = OrderedDict({k: torch.from_numpy(np.copy(v)) for k, v in params_dict})
-    model.load_state_dict(state_dict, strict=True)
-
