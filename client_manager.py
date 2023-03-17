@@ -3,16 +3,19 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 import random
 import threading
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List,Tuple
 from flwr.common.logger import log
 from logging import INFO
+from q_learning import QLearning
+from constant import RANDOM_SELECT_RATE
 
 
 class RLManager(ClientManager):
 
-    def __init__(self) -> None:
+    def __init__(self, qs: List[QLearning]) -> None:
         self.clients: Dict[str, ClientProxy] = {}
         self._cv = threading.Condition()
+        self.qs = qs
 
     def __len__(self) -> int:
         return len(self.clients)
@@ -73,6 +76,14 @@ class RLManager(ClientManager):
                 num_clients,
             )
             return []
+        if random.uniform(0, 1) < RANDOM_SELECT_RATE:
+            sampled_cids = random.sample(available_cids, num_clients)
+        else:
+            maxqs: List[Tuple[str, int]] = list() # 包含客户端id和最大q值的列表
+            for i in range(0,len(available_cids)):
+                maxqs.append((str(i),self.qs[i].get_max_q()))
+            maxqs_sorted = sorted(maxqs, key=lambda x: x[1]) # 排序
+            print(maxqs_sorted)
+            sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]] # 选择最大的num_clients个
 
-        sampled_cids = random.sample(available_cids, num_clients)
         return [self.clients[cid] for cid in sampled_cids]
