@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from state import ClientState
+from server.state import ClientState
 from typing import Dict
 from collections import defaultdict
 

@@ -1,10 +1,13 @@
 import flwr as fl
-from dataset_utils import get_cifar_10, do_fl_partitioning
+from server.dataset_utils import get_cifar_10, do_fl_partitioning
 
-from client import FlowerClient, fit_config, get_evaluate_fn
-from q_learning import QLearning
-from client_manager import RLManager
+from client.client import FlowerClient, fit_config, get_evaluate_fn
+from server.q_learning import QLearning
+from server.client_manager import RLManager
 from constant import *
+from strategy.fedavg import RLFedAvg
+from typing import List,Dict
+from server.server import RLServer
 if __name__ == "__main__":
     # parse input arguments
 
@@ -15,7 +18,12 @@ if __name__ == "__main__":
 
     # Download CIFAR-10 dataset
     train_path, testset = get_cifar_10()
-
+    qs: List[QLearning] = list()
+    cid2q: Dict[str, QLearning] = dict()
+    for i in range(0, NUM_CLIENTS):
+        q = QLearning()
+        qs.append(q)
+        cid2q[str(i)] = q
     # part ition dataset (use a large `alpha` to make it IID;
     # a small value (e.g. 1) will make it non-IID)
     # This will create a new directory called "federated": in the directory where
@@ -26,7 +34,7 @@ if __name__ == "__main__":
     )
 
     # configure the strategy
-    strategy = fl.server.strategy.FedAvg(
+    strategy = RLFedAvg(
         fraction_fit=0.1,
         fraction_evaluate=0.1,
         min_fit_clients=5,
@@ -34,6 +42,7 @@ if __name__ == "__main__":
         min_available_clients=pool_size,  # All clients should be available
         on_fit_config_fn=fit_config,
         evaluate_fn=get_evaluate_fn(testset),  # centralised evaluation of global model
+        cid2q=cid2q,
     )
 
 
@@ -45,9 +54,9 @@ if __name__ == "__main__":
     # (optional) specify Ray config
     ray_init_args = {"include_dashboard": True}
 
-    qs = [QLearning() for i in range(0,NUM_CLIENTS)]
 
-    server = fl.server.Server(strategy=strategy, client_manager=RLManager(qs))
+
+    server = RLServer(strategy=strategy, client_manager=RLManager(qs))
     server.set_max_workers(1)
     # start simulation
     fl.simulation.start_simulation(

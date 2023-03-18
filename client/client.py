@@ -7,8 +7,8 @@ import numpy as np
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, Callable, Optional, Tuple, List
-from dataset_utils import get_cifar_10, do_fl_partitioning, get_dataloader
-from utils import Net, train, test
+from server.dataset_utils import get_dataloader
+from server.network import Net, train, test
 
 # Flower client, adapted from Pytorch quickstart example
 class FlowerClient(fl.client.NumPyClient):
