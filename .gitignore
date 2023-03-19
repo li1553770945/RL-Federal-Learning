@@ -1,7 +1,2 @@
-/venv
-/.idea
-/client/data
-/server/data
-*/__pycache__/
-__pycache__/
-.DS_Store
+data
+__pycache__

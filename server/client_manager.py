@@ -1,50 +1,20 @@
-from flwr.server import ClientManager
+from flwr.server import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 import random
 import threading
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List,Tuple
 from flwr.common.logger import log
 from logging import INFO
+from server.q_learning import QLearning
+from constant import RANDOM_SELECT_RATE
 
 
-class RLManager(ClientManager):
+class RLManager(SimpleClientManager):
 
-    def __init__(self) -> None:
-        self.clients: Dict[str, ClientProxy] = {}
-        self._cv = threading.Condition()
-
-    def __len__(self) -> int:
-        return len(self.clients)
-
-    def num_available(self) -> int:
-        return len(self)
-
-    def wait_for(self, num_clients: int, timeout: int = 86400) -> bool:
-        with self._cv:
-            return self._cv.wait_for(
-                lambda: len(self.clients) >= num_clients, timeout=timeout
-            )
-
-    def register(self, client: ClientProxy) -> bool:
-        if client.cid in self.clients:
-            return False
-        print("register new client,id:{}".format(client.cid))
-        self.clients[client.cid] = client
-        with self._cv:
-            self._cv.notify_all()
-
-        return True
-
-    def unregister(self, client: ClientProxy) -> None:
-        if client.cid in self.clients:
-            del self.clients[client.cid]
-
-            with self._cv:
-                self._cv.notify_all()
-
-    def all(self) -> Dict[str, ClientProxy]:
-        return self.clients
+    def __init__(self, qs: List[QLearning]) -> None:
+        super(RLManager, self).__init__()
+        self.qs = qs
 
     def sample(
             self,
@@ -73,6 +43,14 @@ class RLManager(ClientManager):
                 num_clients,
             )
             return []
-
-        sampled_cids = random.sample(available_cids, num_clients)
+        if random.uniform(0, 1) < RANDOM_SELECT_RATE:
+            sampled_cids = random.sample(available_cids, num_clients)
+            log(INFO, "select {} device based randomly".format(num_clients))
+        else:
+            maxqs: List[Tuple[str, int]] = list() # 包含客户端id和最大q值的列表
+            for i in range(0,len(available_cids)):
+                maxqs.append((str(i),self.qs[i].get_max_q()))
+            maxqs_sorted = sorted(maxqs, key=lambda x: x[1],reverse=True) # 排序
+            log(INFO,"select {} device based on max q".format(num_clients))
+            sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]] # 选择最大的num_clients个
         return [self.clients[cid] for cid in sampled_cids]
