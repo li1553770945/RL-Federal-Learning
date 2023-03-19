@@ -1,17 +1,17 @@
 import flwr as fl
 from server.dataset_utils import get_cifar_10, do_fl_partitioning
-
-from client.client import FlowerClient, fit_config, get_evaluate_fn
+from client.client import FlowerClient, get_evaluate_fn
 from server.q_learning import QLearning
 from server.client_manager import RLManager
 from constant import *
 from strategy.fedavg import RLFedAvg
-from typing import List,Dict
-from server.server import RLServer
+from typing import List, Dict
+from server.server import RLServer, fit_config
+
 if __name__ == "__main__":
     # parse input arguments
 
-    pool_size = 100 # number of dataset partions (= number of total clients)
+    pool_size = 100  # number of dataset partions (= number of total clients)
     client_resources = {
         "num_cpus": NUM_CPUS
     }  # each client will get allocated 1 CPUs
@@ -54,9 +54,7 @@ if __name__ == "__main__":
     # (optional) specify Ray config
     ray_init_args = {"include_dashboard": True}
 
-
-
-    server = RLServer(strategy=strategy, client_manager=RLManager(qs))
+    server = RLServer(strategy=strategy, client_manager=RLManager(qs), cid2q=cid2q)
     server.set_max_workers(1)
     # start simulation
     fl.simulation.start_simulation(

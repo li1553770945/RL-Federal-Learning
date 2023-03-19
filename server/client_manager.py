@@ -45,12 +45,12 @@ class RLManager(SimpleClientManager):
             return []
         if random.uniform(0, 1) < RANDOM_SELECT_RATE:
             sampled_cids = random.sample(available_cids, num_clients)
+            log(INFO, "select {} device based randomly".format(num_clients))
         else:
             maxqs: List[Tuple[str, int]] = list() # 包含客户端id和最大q值的列表
             for i in range(0,len(available_cids)):
                 maxqs.append((str(i),self.qs[i].get_max_q()))
-            maxqs_sorted = sorted(maxqs, key=lambda x: x[1]) # 排序
-            print(maxqs_sorted)
+            maxqs_sorted = sorted(maxqs, key=lambda x: x[1],reverse=True) # 排序
+            log(INFO,"select {} device based on max q".format(num_clients))
             sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]] # 选择最大的num_clients个
-
         return [self.clients[cid] for cid in sampled_cids]

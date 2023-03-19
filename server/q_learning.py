@@ -23,7 +23,7 @@ class QLearning:
         self.epsilon = 0.1
 
         # 定义Q-table并初始化为0
-        self.Q: Dict[ClientState, np.ndarray] = defaultdict(lambda: np.zeros(10))
+        self.Q: Dict[ClientState, np.ndarray] = defaultdict(lambda: np.zeros(self.n_actions))
         self.state = ClientState()
         self.action = 0
 
@@ -46,9 +46,9 @@ class QLearning:
         self.action = action
         return action
 
-    def update(self, new_state: ClientState, reward:int) -> None:
-        # 执行Q-learning算法
-
+    def update(self, reward:int,new_state: ClientState = None) -> None:
+        # 如果没有更新state，则还是当前的state
+        new_state = self.state if new_state is None else new_state
         # 根据Q-learning更新规则更新Q值
         td_error = reward + self.discount_factor * np.max(self.Q[new_state]) - self.Q[self.state][self.action]
         self.Q[self.state][self.action] += self.learning_rate * td_error
