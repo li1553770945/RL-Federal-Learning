@@ -77,6 +77,9 @@ class RLFedAvg(FedAvg):
         for client in clients:
             config = copy.deepcopy(basic_config)
             config['action'] = self.cid2q[client.cid].get_action()
+            config['co_cpu'] = self.cid2q[client.cid].state.co_cpu
+            config['co_memory'] = self.cid2q[client.cid].state.co_memory
+            config['network_bandwidth'] = self.cid2q[client.cid].state.network_bandwidth
             # config['co_running_cpu_use'] =
             # config['co_running_mem_use']
             ins = FitIns(parameters, config)

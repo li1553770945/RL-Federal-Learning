@@ -54,3 +54,4 @@ class RLManager(SimpleClientManager):
             log(INFO,"select {} device based on max q".format(num_clients))
             sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]] # 选择最大的num_clients个
         return [self.clients[cid] for cid in sampled_cids]
+

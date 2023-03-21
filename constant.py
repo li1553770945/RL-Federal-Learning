@@ -11,5 +11,5 @@ NUM_CLIENTS = 100  # 一共多少个客户端
 NUM_CPUS = 0.1  # 每个客户端占用的CPU资源，根据ray的定义
 NUM_ROUNDS = 10  # 总共训练几轮
 
-REWARD_ACC_RATE = 1  # 最终计算奖励时，精确率的系数
-REWARD_ACC_IMPROVE_RATE = 1  # 最终计算奖励时，精确率提升所占的系统
+REWARD_ACC_RATE = 1  # 最终计算奖励时，精确率的系数,论文中的alpha
+REWARD_ACC_IMPROVE_RATE = 1  # 最终计算奖励时，精确率提升所占的系统，论文中的beta

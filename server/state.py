@@ -5,58 +5,89 @@ from constant import *
 class ClientState:
     def __init__(self):
         if S_CONV < 10:
-            self.CONV = 0  # Small (<10), medium (<20), large (<30), larger (>=40)
+            self.s_conv = 0  # Small (<10), medium (<20), large (<30), larger (>=40)
         elif S_CONV < 20:
-            self.CONV = 1
+            self.s_conv = 1
         elif S_CONV < 30:
-            self.CONV = 2
+            self.s_conv = 2
         else:
-            self.CONV = 3
+            self.s_conv = 3
 
         if S_FC < 10:
-            self.FC = 0
+            self.s_fc = 0
         else:
-            self.FC = 1
+            self.s_fc = 1
 
         if S_RC < 5:
-            self.RC = 0
+            self.s_rc = 0
         elif S_RC < 10:
-            self.RC = 1
+            self.s_rc = 1
         else:
-            self.RC = 2
+            self.s_rc = 2
 
         if BATCH_SIZE < 8:
-            self.B = 0
+            self.s_batch_size = 0
         elif BATCH_SIZE < 32:
-            self.B = 1
+            self.s_batch_size = 1
         else:
-            self.B = 2
+            self.s_batch_size = 2
 
         if LOCAL_EPOCH < 5:
-            self.E = 0
+            self.s_epoch = 0
         elif LOCAL_EPOCH < 10:
-            self.E = 1
+            self.s_epoch = 1
         else:
-            self.E = 2
+            self.s_epoch = 2
 
         if NUM_CLIENTS < 10:
-            self.K = 0
+            self.s_participant_device = 0
         elif NUM_CLIENTS < 50:
-            self.K = 1
+            self.s_participant_device = 1
         else:
-            self.K = 2
+            self.s_participant_device = 2
 
-        self.CoCPU = 0
-        self.CoMem = 0
-        self.Network = 0
-        self.Data = 0
+        self.co_cpu = 0
+        self.co_memory = 0
+        self.network_bandwidth = 0
+        self.data = 0
 
     def __hash__(self):
         vector = np.zeros((10,))
+        vector[0] = self.s_conv
+        vector[1] = self.s_fc
+        vector[2] = self.s_rc
+        vector[3] = self.s_batch_size
+        vector[4] = self.s_epoch
+        vector[5] = self.s_participant_device
+        if self.co_cpu == 0:
+            vector[6] = 0
+        elif self.co_cpu < 25:
+            vector[6] = 1
+        elif self.co_cpu <75:
+            vector[6] = 2
+        else:
+            vector[6] = 3
+
+        if self.co_memory == 0:
+            vector[7] = 0
+        elif self.co_memory < 25:
+            vector[7] = 1
+        elif self.co_memory < 75:
+            vector[7] = 2
+        else:
+            vector[7] = 3
+
+        if self.network_bandwidth < 40:
+            vector[8] = 0
+        else:
+            vector[8] = 1
+
+        if self.data < 25:
+            vector[9] = 0
+        elif self.data < 100:
+            vector[9] = 1
+        else:
+            vector[9] = 2
         return hash(tuple(vector))  # 把向量转换成元组
 
-    def set_co_cpu(self, utilization):
-        if utilization == 0:
-            self.CoCPU = 0
-        elif utilization < 25:
-            self.CoCPU = 1
+
