@@ -3,7 +3,7 @@ import random
 from server.state import ClientState
 from typing import Dict
 from collections import defaultdict
-
+from constant import *
 
 class QLearning:
     def __init__(self):
@@ -16,8 +16,6 @@ class QLearning:
         # 定义折扣因子
         self.discount_factor = 0.1
 
-        # 定义epsilon值，用于epsilon-greedy策略
-        self.epsilon = 0.1
 
         # 定义Q-table并初始化为0
         self.Q: Dict[ClientState, np.ndarray] = defaultdict(lambda: np.zeros(self.n_actions))
@@ -31,7 +29,7 @@ class QLearning:
         self.state = state
 
     def epsilon_greedy(self) -> int:
-        if random.uniform(0, 1) < self.epsilon:
+        if random.uniform(0, 1) < QLEARNING_EPSILON:
             # 随机选择动作
             action = np.random.randint(self.n_actions)
         else:

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, Callable, Optional, Tuple, List
 from server.dataset_utils import get_dataloader
 from server.network import Net, train, test
-
+from constant import *
 
 # Flower client, adapted from Pytorch quickstart example
 class FlowerClient(fl.client.NumPyClient):
@@ -47,9 +47,11 @@ class FlowerClient(fl.client.NumPyClient):
 
         # Train
         train(self.net, trainloader, epochs=config["epochs"], device=self.device)
+        action = config['action']
+        Ecomp = ENERGY_BASE * ENERGY_TIMES[action]
 
         # Return local model and statistics
-        metrics = {"Ecomp": 10, "Ecomm": 10}
+        metrics = {"Ecomp": Ecomp, "Ecomm": 10}
         return get_params(self.net), len(trainloader.dataset), metrics
 
     def evaluate(self, parameters, config):

@@ -11,7 +11,7 @@ from server.server import RLServer, fit_config
 if __name__ == "__main__":
     # parse input arguments
 
-    pool_size = 100  # number of dataset partions (= number of total clients)
+    pool_size = NUM_CLIENTS # number of dataset partions (= number of total clients)
     client_resources = {
         "num_cpus": NUM_CPUS
     }  # each client will get allocated 1 CPUs
@@ -35,9 +35,9 @@ if __name__ == "__main__":
 
     # configure the strategy
     strategy = RLFedAvg(
-        fraction_fit=0.1,
-        fraction_evaluate=0.1,
-        min_fit_clients=5,
+        fraction_fit=0,
+        fraction_evaluate=0,
+        min_fit_clients=PARTICIPANT_DEVICES,
         min_evaluate_clients=5,
         min_available_clients=pool_size,  # All clients should be available
         on_fit_config_fn=fit_config,
