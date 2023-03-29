@@ -12,8 +12,14 @@ NUM_CPUS = 0.1  # 每个客户端占用的CPU资源，根据ray的定义
 NUM_ROUNDS = 100  # 总共训练几轮
 
 REWARD_ACC_RATE = 1  # 最终计算奖励时，精确率的系数,论文中的alpha
-REWARD_ACC_IMPROVE_RATE = 5  # 最终计算奖励时，精确率提升所占的系统，论文中的beta
+REWARD_ACC_IMPROVE_RATE = 10  # 最终计算奖励时，精确率提升所占的系统，论文中的beta
 
 ENERGY_BASE = 10
 ENERGY_TIMES = [10, 9, 7, 4, 1]  # 对于每个action，能量消耗乘以的倍率
 TIME_USE_TIMES = [1, 2, 3, 4, 5]  # 对于每个action，时间乘以的倍率
+
+PERFORMANCE_ENERGY_TIMES = [0.5, 1, 2]  # 性能从好到差的CPU，设备能量消耗倍率
+
+LOW_PERFORMANCE_RATE = 0.3  # 低端设备所占的百分比
+NORMAL_PERFORMANCE_RATE = 0.4  # 中端设备所占的百分比
+HIGH_PERFORMANCE_RATE = 0.3  # 高端设备所占的百分比

@@ -48,10 +48,12 @@ class FlowerClient(fl.client.NumPyClient):
         # Train
         train(self.net, trainloader, epochs=config["epochs"], device=self.device)
         action = config['action']
-        Ecomp = ENERGY_BASE * ENERGY_TIMES[action]
+        performance = config['performance']
+        Ecomp = ENERGY_BASE * ENERGY_TIMES[action] * PERFORMANCE_ENERGY_TIMES[performance]
 
-        # Return local model and statistics
         metrics = {"Ecomp": Ecomp, "Ecomm": 10}
+
+        #print("cid:{},action:{}".format(self.cid,action))
         return get_params(self.net), len(trainloader.dataset), metrics
 
     def evaluate(self, parameters, config):
