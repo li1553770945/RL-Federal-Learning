@@ -1,3 +1,4 @@
+import random
 from typing import Callable, Dict, List, Optional, Tuple
 
 from flwr.common import (
@@ -39,6 +40,7 @@ class RLFedAvg(FedAvg):
             fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
             evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
             cid2q: Dict[str, QLearning],
+            method: str,
     ) -> None:
         super(RLFedAvg, self).__init__(fraction_fit=fraction_fit,
                                        fraction_evaluate=fraction_evaluate,
@@ -54,6 +56,7 @@ class RLFedAvg(FedAvg):
                                        evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
                                        )
         self.cid2q = cid2q
+        self.method = method
 
     def configure_fit(
             self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -75,8 +78,18 @@ class RLFedAvg(FedAvg):
         # Return client/config pairs
         fits: List[Tuple[ClientProxy, FitIns]] = list()
         for client in clients:
+
             config = copy.deepcopy(basic_config)
-            config['action'] = self.cid2q[client.cid].get_action()
+            if self.method == "qlearning":
+                config['action'] = self.cid2q[client.cid].get_action()
+            elif self.method == "random":
+                config['action'] = random.randint(0, self.cid2q[client.cid].n_actions - 1)
+            elif self.method == "performance":
+                config['action'] = 0
+            config['co_cpu'] = self.cid2q[client.cid].state.co_cpu
+            config['co_memory'] = self.cid2q[client.cid].state.co_memory
+            config['network_bandwidth'] = self.cid2q[client.cid].state.network_bandwidth
+            config['performance'] = self.cid2q[client.cid].performance
             # config['co_running_cpu_use'] =
             # config['co_running_mem_use']
             ins = FitIns(parameters, config)

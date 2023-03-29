@@ -3,7 +3,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 import random
 import threading
-from typing import Dict, Optional, List,Tuple
+from typing import Dict, Optional, List, Tuple
 from flwr.common.logger import log
 from logging import INFO
 from server.q_learning import QLearning
@@ -12,9 +12,10 @@ from constant import RANDOM_SELECT_RATE
 
 class RLManager(SimpleClientManager):
 
-    def __init__(self, qs: List[QLearning]) -> None:
+    def __init__(self, qs: List[QLearning], method: str) -> None:
         super(RLManager, self).__init__()
         self.qs = qs
+        self.method = method
 
     def sample(
             self,
@@ -43,14 +44,21 @@ class RLManager(SimpleClientManager):
                 num_clients,
             )
             return []
-        if random.uniform(0, 1) < RANDOM_SELECT_RATE:
+        if random.uniform(0, 1) < RANDOM_SELECT_RATE or self.method == "random":
             sampled_cids = random.sample(available_cids, num_clients)
             log(INFO, "select {} device based randomly".format(num_clients))
-        else:
-            maxqs: List[Tuple[str, int]] = list() # 包含客户端id和最大q值的列表
-            for i in range(0,len(available_cids)):
-                maxqs.append((str(i),self.qs[i].get_max_q()))
-            maxqs_sorted = sorted(maxqs, key=lambda x: x[1],reverse=True) # 排序
-            log(INFO,"select {} device based on max q".format(num_clients))
-            sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]] # 选择最大的num_clients个
+        elif self.method == "qlearning":
+            maxqs: List[Tuple[str, int]] = list()  # 包含客户端id和最大q值的列表
+            for i in range(0, len(available_cids)):
+                maxqs.append((str(i), self.qs[i].get_max_q()))
+            maxqs_sorted = sorted(maxqs, key=lambda x: x[1], reverse=True)  # 排序
+            log(INFO, "select {} device based on max q".format(num_clients))
+            sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]]  # 选择最大的num_clients个
+        elif self.method == "performance":
+            max_performance: List[Tuple[str, int]] = list()  # 包含客户端id和最大q值的列表
+            for i in range(0, len(available_cids)):
+                max_performance.append((str(i), self.qs[i].performance))
+            max_performance_sorted = sorted(max_performance, key=lambda x: x[1], reverse=True)  # 排序
+            log(INFO, "select {} device based on max performance".format(num_clients))
+            sampled_cids = [x[0] for x in max_performance_sorted[:num_clients]]  # 选择最大的num_clients个
         return [self.clients[cid] for cid in sampled_cids]

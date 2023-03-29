@@ -64,7 +64,7 @@ class RLServer(flwr.server.Server):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
         history = History()
-
+        total_energy = 0
         # Initialize parameters
         log(INFO, "Initializing global parameters")
         self.parameters = self._get_initial_parameters(timeout=timeout)
@@ -104,7 +104,7 @@ class RLServer(flwr.server.Server):
                     metrics_cen,
                     timeit.default_timer() - start_time,
                 )
-                self.update_qlearning(fit_reses=res_fit[2], acc=metrics_cen['accuracy'])
+                total_energy += self.update_qlearning(fit_reses=res_fit[2], acc=metrics_cen['accuracy'])
                 history.add_loss_centralized(server_round=current_round, loss=loss_cen)
                 history.add_metrics_centralized(
                     server_round=current_round, metrics=metrics_cen
@@ -125,21 +125,16 @@ class RLServer(flwr.server.Server):
         # Bookkeeping
         end_time = timeit.default_timer()
         elapsed = end_time - start_time
-        log(INFO, "FL finished in %s", elapsed)
+        log(INFO, "FL finished in %s,total energy use:%d", elapsed,total_energy)
         return history
 
-    def update_qlearning(self, fit_reses: FitResultsAndFailures, acc: float):
+    def update_qlearning(self, fit_reses: FitResultsAndFailures, acc: float)->int:
 
         successes, fails = fit_reses
         r_energy_global = 0
 
         # 如果没有提升精度，奖励直接是R-100
-        if acc < self.last_acc:
-            R = int(acc * 100 - 100)
-            for success in successes:
-                client, _ = success
-                self.cid2q[client.cid].update(reward=R)
-            return
+
 
         # 计算全局消耗能量
         for success in successes:
@@ -150,6 +145,13 @@ class RLServer(flwr.server.Server):
             r_energy_local = Ecomm + Ecomp
             r_energy_global += r_energy_local
 
+        if acc < self.last_acc:
+            R = int(acc * 100 - 100)
+            for success in successes:
+                client, _ = success
+                self.cid2q[client.cid].update(reward=R)
+            return r_energy_global
+
         r_acc = acc * 100
         r_acc_pre = self.last_acc * 100
         # 优化每个客户端
@@ -159,15 +161,14 @@ class RLServer(flwr.server.Server):
             Ecomp = metrics['Ecomp']
             Ecomm = metrics['Ecomm']
             r_energy_local = Ecomm + Ecomp
-            reward = 0 - r_energy_global - r_energy_local \
+            reward = 0 - r_energy_global/PARTICIPANT_DEVICES - r_energy_local \
                      + REWARD_ACC_RATE * r_acc \
                      + REWARD_ACC_IMPROVE_RATE * (r_acc - r_acc_pre)
 
             self.cid2q[client.cid].update(reward=reward)
 
-        cid = successes[0][0].cid
         self.last_acc = acc
-        pass
+        return r_energy_global
 
 
 def fit_config(server_round: int) -> Dict[str, Scalar]:
