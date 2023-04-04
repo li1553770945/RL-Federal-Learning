@@ -7,11 +7,35 @@ from constant import *
 from strategy.fedavg import RLFedAvg
 from typing import List, Dict
 from server.server import RLServer, fit_config
-
+import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser(description="Flower Simulation with PyTorch")
-parser.add_argument("--method", type=str, default="random", choices=['qlearning', 'random', 'performance'])
+parser.add_argument("--method", type=str, default="qlearning", choices=['qlearning', 'random', 'performance'])
+
+
+def generate_state() -> (List[QLearning], Dict[str, QLearning]):
+    qs: List[QLearning] = list()
+    cid2q: Dict[str, QLearning] = dict()
+
+    network_bandwidth = np.random.normal(40, 30, NUM_CLIENTS)
+
+    for i in range(0, NUM_CLIENTS):  # 高中低三种性能
+
+        if i / NUM_CLIENTS < HIGH_PERFORMANCE_RATE:
+            q = QLearning(0)
+        elif i / NUM_CLIENTS < HIGH_PERFORMANCE_RATE + NORMAL_PERFORMANCE_RATE:
+            q = QLearning(1)
+        else:
+            q = QLearning(2)
+
+        q.state.network_bandwidth = network_bandwidth[i]
+
+        qs.append(q)
+        cid2q[str(i)] = q
+
+    return qs, cid2q
+
 
 if __name__ == "__main__":
     # parse input arguments
@@ -26,19 +50,8 @@ if __name__ == "__main__":
 
     # Download CIFAR-10 dataset
     train_path, testset = get_cifar_10()
-    qs: List[QLearning] = list()
-    cid2q: Dict[str, QLearning] = dict()
 
-    for i in range(0, NUM_CLIENTS):
-        if i/NUM_CLIENTS < HIGH_PERFORMANCE_RATE:
-            q = QLearning(0)
-        elif i / NUM_CLIENTS < HIGH_PERFORMANCE_RATE + NORMAL_PERFORMANCE_RATE:
-            q = QLearning(1)
-        else:
-            q = QLearning(2)
-        qs.append(q)
-        cid2q[str(i)] = q
-
+    qs, cid2q = generate_state()
 
     # part ition dataset (use a large `alpha` to make it IID;
     # a small value (e.g. 1) will make it non-IID)
@@ -71,7 +84,7 @@ if __name__ == "__main__":
     # (optional) specify Ray config
     ray_init_args = {"include_dashboard": True}
 
-    server = RLServer(strategy=strategy, client_manager=RLManager(qs,method=method), cid2q=cid2q)
+    server = RLServer(strategy=strategy, client_manager=RLManager(qs, method=method), cid2q=cid2q)
     server.set_max_workers(1)
     # start simulation
     fl.simulation.start_simulation(
