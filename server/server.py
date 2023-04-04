@@ -55,11 +55,16 @@ class RLServer(flwr.server.Server):
             client_manager: ClientManager,
             strategy: Strategy,
             cid2q: Dict[str, QLearning],
+            energy_list:List,
+            acc_list:List,
 
     ) -> None:
         super(RLServer, self).__init__(client_manager=client_manager, strategy=strategy)
         self.last_acc = 0
         self.cid2q = cid2q
+        self.energy_list = energy_list
+        self.acc_list = acc_list
+
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
@@ -144,6 +149,9 @@ class RLServer(flwr.server.Server):
             Ecomm = metrics['Ecomm']
             r_energy_local = Ecomm + Ecomp
             r_energy_global += r_energy_local
+
+        self.acc_list.append(acc)
+        self.energy_list.append(r_energy_global)
 
         if acc < self.last_acc:
             R = int(acc * 100 - 100)
