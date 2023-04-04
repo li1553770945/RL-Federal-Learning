@@ -5,13 +5,12 @@ import torch
 import torchvision
 import numpy as np
 from collections import OrderedDict
-from pathlib import Path
 from typing import Dict, Callable, Optional, Tuple, List
 from server.dataset_utils import get_dataloader
 from server.network import Net, train, test
-from constant import *
+from .energy import *
 
-# Flower client, adapted from Pytorch quickstart example
+
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, cid: str, fed_dir_data: str):
         self.cid = cid
@@ -49,11 +48,15 @@ class FlowerClient(fl.client.NumPyClient):
         train(self.net, trainloader, epochs=config["epochs"], device=self.device)
         action = config['action']
         performance = config['performance']
-        Ecomp = ENERGY_BASE * ENERGY_TIMES[action] * PERFORMANCE_ENERGY_TIMES[performance]
+        network_bandwidth = config['network_bandwidth']
+        co_cpu = config['co_cpu']
+        co_memory = config['co_memory']
 
-        metrics = {"Ecomp": Ecomp, "Ecomm": 10}
+        Ecomp = get_comp_energy(action, performance,co_cpu,co_memory)
+        Ecomm = get_comm_energy(network_bandwidth)
+        metrics = {"Ecomp": Ecomp, "Ecomm": Ecomm}
 
-        #print("cid:{},action:{}".format(self.cid,action))
+        # print("cid:{},action:{}".format(self.cid,action))
         return get_params(self.net), len(trainloader.dataset), metrics
 
     def evaluate(self, parameters, config):
