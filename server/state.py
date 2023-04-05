@@ -49,7 +49,7 @@ class ClientState:
         self.co_cpu = 0
         self.co_memory = 0
         self.network_bandwidth = 0
-        self.data = 0
+        self.data_class_num = 0  # 具有多少个类别的数据
 
     def __hash__(self):
         vector = np.zeros((10,))
@@ -63,7 +63,7 @@ class ClientState:
             vector[6] = 0
         elif self.co_cpu < 25:
             vector[6] = 1
-        elif self.co_cpu <75:
+        elif self.co_cpu < 75:
             vector[6] = 2
         else:
             vector[6] = 3
@@ -82,9 +82,9 @@ class ClientState:
         else:
             vector[8] = 1
 
-        if self.data < 25:
+        if self.data_class_num / NUM_CLASSES < 0.25:
             vector[9] = 0
-        elif self.data < 100:
+        elif self.data_class_num != NUM_CLASSES:
             vector[9] = 1
         else:
             vector[9] = 2

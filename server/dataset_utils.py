@@ -50,22 +50,44 @@ def get_random_id_splits(total: int, val_ratio: float, shuffle: bool = True):
     return indices[split:], indices[:split]
 
 
-def do_fl_partitioning(path_to_dataset, pool_size, alpha, num_classes, val_ratio=0.0):
+def do_fl_partitioning(path_to_dataset, pool_size, iid_rate, num_classes, val_ratio=0.0):
     """Torchvision (e.g. CIFAR-10) datasets using LDA."""
 
     images, labels = torch.load(path_to_dataset)
     idx = np.array(range(len(images)))
-    dataset = [idx, labels]
-    partitions, _ = create_lda_partitions(
-        dataset, num_partitions=pool_size, concentration=alpha, accept_imbalanced=True
+
+    iid_data_num = int(iid_rate * len(images))
+    iid_client_num = int(iid_rate * pool_size)
+    noniid_client_num = pool_size - iid_client_num
+    iid_dataset = [idx[0:iid_data_num], labels[0:iid_data_num]]
+    noniid_dataset = [idx[iid_data_num:],labels[iid_data_num:]]
+
+    iid_partitions, _ = create_lda_partitions(
+        iid_dataset, num_partitions=iid_client_num, concentration=float('inf'), accept_imbalanced=True
     )
 
-    # Show label distribution for first partition (purely informative)
-    partition_zero = partitions[0][1]
-    hist, _ = np.histogram(partition_zero, bins=list(range(num_classes + 1)))
-    print(
-        f"Class histogram for 0-th partition (alpha={alpha}, {num_classes} classes): {hist}"
+    noniid_partitions, _ = create_lda_partitions(
+        noniid_dataset, num_partitions=noniid_client_num, concentration=0.00001, accept_imbalanced=True
     )
+
+    partitions = np.concatenate((iid_partitions, noniid_partitions), axis=0)
+    np.random.shuffle(partitions)
+
+    # Show label distribution for first partition (purely informative)
+    data_num_on_one_client = len(images) // pool_size
+    num_classes_on_clients = list()
+    for i in range(0,pool_size):
+        partition_zero = partitions[i][1]
+        hist, _ = np.histogram(partition_zero, bins=list(range(num_classes + 1)))
+        num_class_on_this_client = 0
+        for j in range(0,len(hist)):
+            if hist[j]/data_num_on_one_client > 1/num_classes * 0.3:
+                # 如果这个类别的数据占的比例，比平均分应战的比例的0.3要高就认为有这个类别的数据，否则认为没有
+                num_class_on_this_client += 1
+        num_classes_on_clients.append(num_class_on_this_client)
+
+        print(hist,num_class_on_this_client)
+
 
     # now save partitioned dataset to disk
     # first delete dir containing splits (if exists), then create it
@@ -98,7 +120,7 @@ def do_fl_partitioning(path_to_dataset, pool_size, alpha, num_classes, val_ratio
         with open(splits_dir / str(p) / "train.pt", "wb") as f:
             torch.save([imgs, labels], f)
 
-    return splits_dir
+    return splits_dir,num_classes_on_clients
 
 
 def cifar10Transformation():

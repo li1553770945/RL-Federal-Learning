@@ -18,3 +18,6 @@ REWARD_ACC_IMPROVE_RATE = 10  # 最终计算奖励时，精确率提升所占的
 LOW_PERFORMANCE_RATE = 0.3  # 低端设备所占的百分比
 NORMAL_PERFORMANCE_RATE = 0.4  # 中端设备所占的百分比
 HIGH_PERFORMANCE_RATE = 0.3  # 高端设备所占的百分比
+
+IID_RATE = 0.5  # 数据满足独立同分布的比例
+NUM_CLASSES = 10  # 一共有多少个类别的数据
