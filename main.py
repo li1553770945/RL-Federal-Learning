@@ -60,59 +60,55 @@ def save(data: List, name: str):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    # method = args.method
-    #
-    # pool_size = NUM_CLIENTS  # number of dataset partions (= number of total clients)
-    # client_resources = {
-    #     "num_cpus": NUM_CPUS
-    # }  # each client will get allocated 1 CPUs
-    #
-    # # Download CIFAR-10 dataset
-    # train_path, testset = get_cifar_10()
-    #
-    # qs, cid2q = generate_state()
-    #
-    # # part ition dataset (use a large `alpha` to make it IID;
-    # # a small value (e.g. 1) will make it non-IID)
-    # # This will create a new directory called "federated": in the directory where
-    # # CIFAR-10 lives. Inside it, there will be N=pool_size sub-directories each with
-    # # its own train/set split.
-    # fed_dir = do_fl_partitioning(
-    #     train_path, pool_size=pool_size, alpha=1000, num_classes=10, val_ratio=0.1
-    # )
-    #
-    # energy_list = list()
-    # acc_list = list()
-    # # configure the strategy
-    # strategy = RLFedAvg(
-    #     fraction_fit=0,
-    #     fraction_evaluate=0,
-    #     min_fit_clients=PARTICIPANT_DEVICES,
-    #     min_evaluate_clients=5,
-    #     min_available_clients=pool_size,  # All clients should be available
-    #     on_fit_config_fn=fit_config,
-    #     evaluate_fn=get_evaluate_fn(testset),  # centralised evaluation of global model
-    #     cid2q=cid2q,
-    #     method=method
-    # )
-    #
-    # # (optional) specify Ray config
-    # ray_init_args = {"include_dashboard": True}
-    #
-    # server = RLServer(strategy=strategy, client_manager=RLManager(qs, method=method), cid2q=cid2q,acc_list=acc_list,energy_list=energy_list)
-    # server.set_max_workers(1)
-    # # start simulation
-    # fl.simulation.start_simulation(
-    #     client_fn=client_fn,
-    #     num_clients=pool_size,
-    #     client_resources=client_resources,
-    #     config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-    #     ray_init_args=ray_init_args,
-    #     server=server,
-    # )
+    method = args.method
 
+    pool_size = NUM_CLIENTS  # number of dataset partions (= number of total clients)
+    client_resources = {
+        "num_cpus": NUM_CPUS
+    }  # each client will get allocated 1 CPUs
 
-    acc_list = [x + random.randint(-10,10) for x in range(0,NUM_ROUNDS)]
-    energy_list = [x + random.randint(0,20) for x in range(0,NUM_ROUNDS)]
+    # Download CIFAR-10 dataset
+    train_path, testset = get_cifar_10()
+
+    qs, cid2q = generate_state()
+
+    # part ition dataset (use a large `alpha` to make it IID;
+    # a small value (e.g. 1) will make it non-IID)
+    # This will create a new directory called "federated": in the directory where
+    # CIFAR-10 lives. Inside it, there will be N=pool_size sub-directories each with
+    # its own train/set split.
+    fed_dir = do_fl_partitioning(
+        train_path, pool_size=pool_size, alpha=1000, num_classes=10, val_ratio=0.1
+    )
+
+    energy_list = list()
+    acc_list = list()
+    # configure the strategy
+    strategy = RLFedAvg(
+        fraction_fit=0,
+        fraction_evaluate=0,
+        min_fit_clients=PARTICIPANT_DEVICES,
+        min_evaluate_clients=5,
+        min_available_clients=pool_size,  # All clients should be available
+        on_fit_config_fn=fit_config,
+        evaluate_fn=get_evaluate_fn(testset),  # centralised evaluation of global model
+        cid2q=cid2q,
+        method=method
+    )
+
+    # (optional) specify Ray config
+    ray_init_args = {"include_dashboard": True}
+
+    server = RLServer(strategy=strategy, client_manager=RLManager(qs, method=method), cid2q=cid2q,acc_list=acc_list,energy_list=energy_list)
+    server.set_max_workers(1)
+    # start simulation
+    fl.simulation.start_simulation(
+        client_fn=client_fn,
+        num_clients=pool_size,
+        client_resources=client_resources,
+        config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
+        ray_init_args=ray_init_args,
+        server=server,
+    )
     save(acc_list, "accuracy_"+args.method)
     save(energy_list, "energy_"+args.method)
