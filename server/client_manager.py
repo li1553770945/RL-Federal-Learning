@@ -12,9 +12,9 @@ from constant import RANDOM_SELECT_RATE
 
 class RLManager(SimpleClientManager):
 
-    def __init__(self, qs: List[QLearning], method: str) -> None:
+    def __init__(self, cid2q:Dict[str, QLearning] , method: str) -> None:
         super(RLManager, self).__init__()
-        self.qs = qs
+        self.cid2q = cid2q
         self.method = method
 
     def sample(
@@ -49,16 +49,16 @@ class RLManager(SimpleClientManager):
             log(INFO, "select {} device based randomly".format(num_clients))
         elif self.method == "qlearning":
             maxqs: List[Tuple[str, int]] = list()  # 包含客户端id和最大q值的列表
-            for i in range(0, len(available_cids)):
-                maxqs.append((str(i), self.qs[i].get_max_q()))
+            for cid in available_cids:
+                maxqs.append((cid, self.cid2q[cid].get_max_q()))
             maxqs_sorted = sorted(maxqs, key=lambda x: x[1], reverse=True)  # 排序
             log(INFO, "select {} device based on max q".format(num_clients))
             sampled_cids = [x[0] for x in maxqs_sorted[:num_clients]]  # 选择最大的num_clients个
         elif self.method == "performance":
-            max_performance: List[Tuple[str, int]] = list()  # 包含客户端id和最大q值的列表
-            for i in range(0, len(available_cids)):
-                max_performance.append((str(i), self.qs[i].performance))
-            max_performance_sorted = sorted(max_performance, key=lambda x: x[1], reverse=True)  # 排序
+            max_performance: List[Tuple[str, int]] = list()  # 包含客户端id和performance的列表，注意performance越小性能越好
+            for cid in available_cids:
+                max_performance.append((cid, self.cid2q[cid].performance))
+            max_performance_sorted = sorted(max_performance, key=lambda x: x[1])  # 排序
             log(INFO, "select {} device based on max performance".format(num_clients))
             sampled_cids = [x[0] for x in max_performance_sorted[:num_clients]]  # 选择最大的num_clients个
         return [self.clients[cid] for cid in sampled_cids]

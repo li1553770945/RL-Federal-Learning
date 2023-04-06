@@ -7,7 +7,7 @@ from constant import *
 
 
 class QLearning:
-    def __init__(self, performance):
+    def __init__(self, performance,cid:str):
         # 定义动作空间大小
         self.n_actions = 5
 
@@ -19,7 +19,7 @@ class QLearning:
 
         # 定义Q-table并初始化为0
         self.Q: Dict[ClientState, np.ndarray] = defaultdict(lambda: np.zeros(self.n_actions))
-        self.state = ClientState()
+        self.state = ClientState(cid)
         self.action = 0
         self.performance = performance
         self.device_state = dict()
@@ -35,7 +35,7 @@ class QLearning:
         else:
             # 选择当前状态下具有最高Q值的动作
             action = np.argmax(self.Q[self.state])
-            #print("performance:{},q[state]:{}".format(self.performance,self.Q[self.state]))
+            print("cid:{},performance:{},q[state]:{}".format(self.state.cid,self.performance,self.Q[self.state]))
         return action
 
     def get_action(self) -> int:

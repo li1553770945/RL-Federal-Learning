@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from typing import List
 
 if __name__ == "__main__":
-    target = "accuracy"
+    target = "energy"
     labels = ["qlearning", "random"]
     color = ['r', 'b']
 
