@@ -3,7 +3,8 @@ from constant import *
 
 
 class ClientState:
-    def __init__(self):
+    def __init__(self,cid:str):
+        self.cid = cid
         if S_CONV < 10:
             self.s_conv = 0  # Small (<10), medium (<20), large (<30), larger (>=40)
         elif S_CONV < 20:
